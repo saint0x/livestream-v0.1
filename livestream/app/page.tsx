@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Slider } from "@/components/ui/slider"
@@ -14,16 +14,22 @@ export default function StreamingUI() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
+  const stopStreamTracks = useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop())
+    }
+  }, [stream])
+
   useEffect(() => {
     async function startWebcam() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const newStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         })
-        setStream(stream)
+        setStream(newStream)
         if (videoRef.current) {
-          videoRef.current.srcObject = stream
+          videoRef.current.srcObject = newStream
         }
       } catch (error) {
         console.error("Error accessing webcam:", error)
@@ -32,12 +38,8 @@ export default function StreamingUI() {
 
     startWebcam()
 
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
-      }
-    }
-  }, [])
+    return stopStreamTracks
+  }, [stopStreamTracks])
 
   const handleStartRecording = () => {
     if (stream) {
